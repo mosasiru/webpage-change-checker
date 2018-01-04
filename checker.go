@@ -35,7 +35,7 @@ type PageConfig struct {
 
 	// Default: 10 (second)
 	Timeout int `toml:"timeout"`
-	// Default: 10 (second)
+	// Default: 600 (second)
 	Interval int `toml:"interval"`
 
 	NotifyNoChange bool `toml:"notify_no_change"`
@@ -58,7 +58,7 @@ type SlackConfig struct {
 const (
 	DefaultCacheFile = ".checker."
 	DefaultTimeout   = 10
-	DefaultInterval  = 10
+	DefaultInterval  = 600
 )
 
 type SlackPayload struct {
@@ -113,7 +113,7 @@ func main() {
 						sa := SlackAttachment{
 							Title:     pc.Name,
 							TitleLink: pc.URL,
-							PreText:   fmt.Sprintf("%s changed!", config.Slack.AlertPrefix),
+							PreText:   fmt.Sprintf("%s %s changed!", config.Slack.AlertPrefix, pc.Name),
 							Text:      diff,
 							Color:     "warning",
 						}

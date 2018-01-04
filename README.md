@@ -33,7 +33,7 @@ you can set multi pages.
 |url            |string|site url  |            |required|
 |selector            |string|CSS selector you want to check diff  |            |example: #content|
 |timeout            |int|request timeout (second)  |     10       ||
-|interval            |int|check interval (second)  |     10       |don't attack sites!|
+|interval            |int|check interval (second)  |     600       |don't attack sites!|
 |notify_no_change            |bool|notify when nothing is changed also  |            ||
 |notify_error            |bool|notify  when error occurs  |     10       |false|
 |notifier            |enum("slack")| notifier. slack is only available now.  |           |||
