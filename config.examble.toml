@@ -1,0 +1,20 @@
+[checker]
+cache_file = ".checker." # cache file name's prefix
+
+[[checker.pages]]
+name = "hoge page" # required
+url = "http://example.com" # required
+selector = "body"  # CSS Selector
+timeout = 10  # second
+interval = 10  # second
+notify_no_change = false
+notify_error = true
+notifier = "slack" # slack is only available now
+
+[slack]
+webhook_url = "https://hooks.slack.com/services/hogehoge"
+channel = ""
+username = "checker"
+icon_emoji = ""
+icon_url = ""
+prefix_text = "@here "
