@@ -38,9 +38,6 @@ you can set multi pages.
 |notify_error            |bool|notify  when error occurs  |     10       |false|
 |notifier            |enum("slack")| notifier. slack is only available now.  |           |||
 
-
-|workers         |int64 |number of workers for push notification     |runtime.NumCPU()|`-w` options can overwrite          |
-
 ## [checker]
 
 

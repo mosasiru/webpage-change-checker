@@ -98,7 +98,7 @@ func main() {
 			for {
 				log.Printf("start: %s", pc.Name)
 				diff, err := checkDiff(cacheFile+pc.Name, pc)
-				if pc.Notifier == "slack" { // TODO zatsu
+				if pc.Notifier == "slack" {
 					if err != nil && pc.NotifyError {
 						sa := SlackAttachment{
 							Title:     pc.Name,
@@ -108,8 +108,7 @@ func main() {
 							Color:     "danger",
 						}
 						postSlack(sa, config.Slack)
-					}
-					if diff != "" {
+					} else if diff != "" {
 						sa := SlackAttachment{
 							Title:     pc.Name,
 							TitleLink: pc.URL,
@@ -118,12 +117,11 @@ func main() {
 							Color:     "warning",
 						}
 						postSlack(sa, config.Slack)
-					}
-					if diff == "" && pc.NotifyNoChange {
+					} else if diff == "" && pc.NotifyNoChange {
 						sa := SlackAttachment{
 							Title:     pc.Name,
 							TitleLink: pc.URL,
-							Text:   fmt.Sprintf("no change"),
+							Text:      fmt.Sprintf("no change"),
 							Color:     "good",
 						}
 						postSlack(sa, config.Slack)
@@ -201,7 +199,7 @@ func buildDiffText(textA, textB string) string {
 }
 
 func postSlack(sa SlackAttachment, sc SlackConfig) error {
-	log.Printf("start post slack: %v", sa)
+	log.Printf("start to post slack: %v", sa)
 	p := SlackPayload{
 		Channel:     sc.Channel,
 		UserName:    sc.UserName,
