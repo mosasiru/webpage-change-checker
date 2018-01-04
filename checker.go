@@ -38,21 +38,21 @@ type PageConfig struct {
 	// Default: 10 (second)
 	Interval int `toml:"interval"`
 
-	NotifyNoChange bool   `toml:"notify_no_change"`
-	NotifyError    bool   `toml:"notify_error"`
+	NotifyNoChange bool `toml:"notify_no_change"`
+	NotifyError    bool `toml:"notify_error"`
 	// enum("slack")
-	Notifier       string `toml:"notifier"`
+	Notifier string `toml:"notifier"`
 }
 
 type SlackConfig struct {
 	// required
 	WebhookURL string `toml:"webhook_url"`
 
-	Channel    string `toml:"channel"`
-	UserName   string `toml:"username"`
-	IconEmoji  string `toml:"icon_emoji"`
-	IconURL    string `toml:"icon_url"`
-	PrefixText string `toml:"prefix_text"`
+	Channel     string `toml:"channel"`
+	UserName    string `toml:"username"`
+	IconEmoji   string `toml:"icon_emoji"`
+	IconURL     string `toml:"icon_url"`
+	AlertPrefix string `toml:"alert_prefix"`
 }
 
 const (
@@ -60,6 +60,22 @@ const (
 	DefaultTimeout   = 10
 	DefaultInterval  = 10
 )
+
+type SlackPayload struct {
+	Channel     string            `json:"channel"`
+	UserName    string            `json:"username"`
+	IconEmoji   string            `json:"icon_emoji"`
+	IconURL     string            `json:"icon_url"`
+	Attathments []SlackAttachment `json:"attachments"`
+}
+
+type SlackAttachment struct {
+	Title     string `json:"title"`
+	TitleLink string `json:"title_link"`
+	PreText   string `json:"pretext"`
+	Text      string `json:"text"`
+	Color     string `json:"color"`
+}
 
 var configFile = flag.String("c", "config.toml", "configuration file")
 
@@ -82,15 +98,35 @@ func main() {
 			for {
 				log.Printf("start: %s", pc.Name)
 				diff, err := checkDiff(cacheFile+pc.Name, pc)
-				if pc.Notifier == "slack" { // TODO
+				if pc.Notifier == "slack" { // TODO zatsu
 					if err != nil && pc.NotifyError {
-						postSlack(fmt.Sprintf("%s error: %s", pc.Name, err), config.Slack)
+						sa := SlackAttachment{
+							Title:     pc.Name,
+							TitleLink: pc.URL,
+							PreText:   fmt.Sprintf("%s error", config.Slack.AlertPrefix),
+							Text:      err.Error(),
+							Color:     "danger",
+						}
+						postSlack(sa, config.Slack)
 					}
 					if diff != "" {
-						postSlack(fmt.Sprintf("%s changed!\n %s", pc.Name, diff), config.Slack)
+						sa := SlackAttachment{
+							Title:     pc.Name,
+							TitleLink: pc.URL,
+							PreText:   fmt.Sprintf("%s changed!", config.Slack.AlertPrefix),
+							Text:      diff,
+							Color:     "warning",
+						}
+						postSlack(sa, config.Slack)
 					}
 					if diff == "" && pc.NotifyNoChange {
-						postSlack(fmt.Sprintf("%s no change.", pc.Name), config.Slack)
+						sa := SlackAttachment{
+							Title:     pc.Name,
+							TitleLink: pc.URL,
+							Text:   fmt.Sprintf("no change"),
+							Color:     "good",
+						}
+						postSlack(sa, config.Slack)
 					}
 				}
 
@@ -139,7 +175,7 @@ func checkDiff(cacheFile string, pc PageConfig) (string, error) {
 	var diff string
 	if preBody, err := ioutil.ReadFile(cacheFile); err == nil {
 		if string(body) != string(preBody) {
-			diff = buildDiffText(string(body), string(preBody))
+			diff = buildDiffText(string(preBody), string(body))
 		}
 	}
 	if err := ioutil.WriteFile(cacheFile, body, 0644); err != nil {
@@ -164,24 +200,16 @@ func buildDiffText(textA, textB string) string {
 	return text
 }
 
-func postSlack(text string, sc SlackConfig) error {
-	text = sc.PrefixText + text
-	log.Printf("start post slack: %s", text)
-
-	var params = struct {
-		Text      string `json:"text"`
-		Channel   string `json:"channel"`
-		UserName  string `json:"username"`
-		IconEmoji string `json:"icon_emoji"`
-		IconURL   string `json:"icon_url"`
-	}{
-		Text:      text,
-		Channel:   sc.Channel,
-		UserName:  sc.UserName,
-		IconEmoji: sc.IconEmoji,
-		IconURL:   sc.IconURL,
+func postSlack(sa SlackAttachment, sc SlackConfig) error {
+	log.Printf("start post slack: %v", sa)
+	p := SlackPayload{
+		Channel:     sc.Channel,
+		UserName:    sc.UserName,
+		IconEmoji:   sc.IconEmoji,
+		IconURL:     sc.IconURL,
+		Attathments: []SlackAttachment{sa},
 	}
-	payload, err := json.Marshal(params)
+	payload, err := json.Marshal(p)
 	if err != nil {
 		log.Printf("json marshal error: %s", err)
 		return err
