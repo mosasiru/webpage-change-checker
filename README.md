@@ -14,7 +14,8 @@ write your own config, and
 
 ```
 go get ./...
-go run checker.go
+go build
+./webpage-change-checker
 ```
 
 
