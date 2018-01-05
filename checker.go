@@ -1,11 +1,15 @@
 package main
 
 import (
+	"crypto/sha1"
+	"encoding/hex"
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/BurntSushi/toml"
@@ -15,15 +19,13 @@ import (
 
 type Config struct {
 	Checker struct {
-		CacheFile string       `toml:"cache_file"`
-		Pages     []PageConfig `toml:"pages"`
+		CacheDir string       `toml:"cache_file"`
+		Pages    []PageConfig `toml:"pages"`
 	} `toml:"checker"`
 	Slack SlackConfig `toml:"slack"`
 }
 
 type PageConfig struct {
-	// required
-	Name string `toml:"name"`
 	// required
 	URL string `toml:"url"`
 
@@ -53,9 +55,9 @@ type SlackConfig struct {
 }
 
 const (
-	DefaultCacheFile = ".checker."
-	DefaultTimeout   = 10
-	DefaultInterval  = 600
+	DefaultCacheDir = ".checker"
+	DefaultTimeout  = 10
+	DefaultInterval = 600
 )
 
 var configFile = flag.String("c", "config.toml", "configuration file")
@@ -70,19 +72,21 @@ func main() {
 	}
 	log.Printf("load config: %#v", config)
 
-	cacheFile := config.Checker.CacheFile
-	if cacheFile == "" {
-		cacheFile = DefaultCacheFile
+	cacheDir := config.Checker.CacheDir
+	if cacheDir == "" {
+		cacheDir = DefaultCacheDir
 	}
+	_ = os.Mkdir(cacheDir, 0755)
+
 	for _, pc := range config.Checker.Pages {
 		go func(pc PageConfig) {
 			for {
-				log.Printf("start: %s", pc.Name)
-				diff, err := checkDiff(cacheFile+pc.Name, pc)
+				log.Printf("start: %s", pc.URL)
+				diff, err := checkDiff(cacheDir, pc)
 				if pc.Notifier == "slack" { // TODO clean
 					if err != nil && pc.NotifyError {
 						sa := SlackAttachment{
-							Title:     pc.Name,
+							Title:     pc.URL,
 							TitleLink: pc.URL,
 							PreText:   fmt.Sprintf("%s error", config.Slack.AlertPrefix),
 							Text:      err.Error(),
@@ -91,16 +95,16 @@ func main() {
 						postSlack(sa, config.Slack)
 					} else if diff != "" {
 						sa := SlackAttachment{
-							Title:     pc.Name,
+							Title:     pc.URL,
 							TitleLink: pc.URL,
-							PreText:   fmt.Sprintf("%s %s changed!", config.Slack.AlertPrefix, pc.Name),
+							PreText:   fmt.Sprintf("%s changed!", config.Slack.AlertPrefix),
 							Text:      diff,
 							Color:     "warning",
 						}
 						postSlack(sa, config.Slack)
 					} else if diff == "" && pc.NotifyNoChange {
 						sa := SlackAttachment{
-							Title:     pc.Name,
+							Title:     pc.URL,
 							TitleLink: pc.URL,
 							Text:      fmt.Sprintf("no change"),
 							Color:     "good",
@@ -122,7 +126,7 @@ func main() {
 	}
 }
 
-func checkDiff(cacheFile string, pc PageConfig) (string, error) {
+func checkDiff(cacheDir string, pc PageConfig) (string, error) {
 	timeout := pc.Timeout
 	if timeout == 0 {
 		timeout = DefaultTimeout
@@ -133,6 +137,7 @@ func checkDiff(cacheFile string, pc PageConfig) (string, error) {
 		log.Printf("req error: %s, url: %s", err, pc.URL)
 		return "", err
 	}
+	defer res.Body.Close()
 	doc, err := goquery.NewDocumentFromResponse(res)
 	if err != nil {
 		log.Printf("goquery doc error: %s, url: %s", err, pc.URL)
@@ -150,6 +155,9 @@ func checkDiff(cacheFile string, pc PageConfig) (string, error) {
 		return "", err
 	}
 	body := []byte(html)
+
+	urlHash := sha1.Sum([]byte(pc.URL))
+	cacheFile := filepath.Join(cacheDir, hex.EncodeToString(urlHash[:]))
 
 	var diff string
 	if preBody, err := ioutil.ReadFile(cacheFile); err == nil {

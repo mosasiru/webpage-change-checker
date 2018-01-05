@@ -1,8 +1,7 @@
 [checker]
-cache_file = ".checker."
+cache_dir = ".checker"
 
 [[checker.pages]]
-name = "example" # required
 url = "http://example.com" # required
 selector = ""  # CSS Selector
 timeout = 10  # second
@@ -12,7 +11,6 @@ notify_error = true
 notifier = "slack" # slack is only available now
 
 [[checker.pages]]
-name = "google"
 url = "http://google.com"
 selector = ".content"
 timeout = 10

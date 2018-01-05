@@ -43,6 +43,7 @@ func postSlack(sa SlackAttachment, sc SlackConfig) error {
 		log.Printf("slack request error: %s", err)
 		return err
 	}
+	defer res.Body.Close()
 	if res.StatusCode != http.StatusOK {
 		log.Printf("cslack status error: %d", res.StatusCode)
 		return errors.New(res.Status)

@@ -30,7 +30,6 @@ you can set multi pages.
 
 |name            |type  |description                                 |default         |note                                |
 |----------------|------|--------------------------------------------|----------------|------------------------------------|
-|name            |string|site name  |            |required|
 |url            |string|site url  |            |required|
 |selector            |string|CSS selector you want to check diff  |            |example: #content|
 |timeout            |int|request timeout (second)  |     10       ||
@@ -44,7 +43,7 @@ you can set multi pages.
 
 |name            |type  |description                                 |default         |note                                |
 |----------------|------|--------------------------------------------|----------------|------------------------------------|
-|cache_file            |string|the file name prefix where pre response is saved  | .checker.           |||
+|cache_dir            |string|the directory name where the latest response is saved  | .checker           |||
 
 
 ## [slack]
