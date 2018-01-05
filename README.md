@@ -8,14 +8,19 @@ Check webpages you like, and notify if it changed.
 
 # Usage
 
-`cp config.example.toml config.toml`
-
-write your own config, and
+```
+go get github.com/mosasiru/webpage-change-checker
+```
 
 ```
-go get ./...
-go build
-./webpage-change-checker
+cp $GOPATH/src/github.com/mosasiru/webpage-change-checker/config.examble.toml config.toml
+```
+
+write your own config, then
+
+
+```
+webpage-change-checker -c config.toml
 ```
 
 
