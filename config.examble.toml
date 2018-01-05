@@ -1,15 +1,25 @@
 [checker]
-cache_file = ".checker." # cache file name's prefix
+cache_file = ".checker."
 
 [[checker.pages]]
-name = "hoge page" # required
+name = "example" # required
 url = "http://example.com" # required
-selector = "body"  # CSS Selector
+selector = ""  # CSS Selector
 timeout = 10  # second
 interval = 600  # second
-notify_no_change = false
+notify_no_change = true
 notify_error = true
 notifier = "slack" # slack is only available now
+
+[[checker.pages]]
+name = "google"
+url = "http://google.com"
+selector = ".content"
+timeout = 10
+interval = 600
+notify_no_change = true
+notify_error = true
+notifier = "slack"
 
 [slack]
 webhook_url = "https://hooks.slack.com/services/hogehoge"
