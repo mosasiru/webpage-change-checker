@@ -8,18 +8,16 @@ Check webpages you like, and notify if it changed.
 
 # Usage
 
-```
+```bash
 go get github.com/mosasiru/webpage-change-checker
-```
 
-```
 cp $GOPATH/src/github.com/mosasiru/webpage-change-checker/config.examble.toml config.toml
 ```
 
 write your own config, then
 
 
-```
+```bash
 webpage-change-checker -c config.toml
 ```
 
